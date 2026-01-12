@@ -7,6 +7,7 @@ PORT = 8000
 ROOT = os.getcwd()
 CONTACTS = os.path.join(ROOT, "templates", "contacts.html")  # путь к contacts.html
 
+
 class Handler(BaseHTTPRequestHandler):
     def send_file(self, full_path):
         """Send a file with guessed mime-type. Returns True on success."""
@@ -28,9 +29,15 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         path = urllib.parse.unquote(self.path)
         # serve CSS/JS/images from /css, /js, /img etc
-        if path.startswith("/css/") or path.startswith("/js/") or path.startswith("/img/"):
+        if (
+            path.startswith("/css/")
+            or path.startswith("/js/")
+            or path.startswith("/img/")
+        ):
             fs_path = os.path.join(ROOT, path.lstrip("/"))
-            if os.path.commonpath([os.path.abspath(fs_path), ROOT]) != os.path.abspath(ROOT):
+            if os.path.commonpath([os.path.abspath(fs_path), ROOT]) != os.path.abspath(
+                ROOT
+            ):
                 self.send_error(403)
                 return
             if os.path.exists(fs_path) and os.path.isfile(fs_path):
@@ -61,6 +68,7 @@ class Handler(BaseHTTPRequestHandler):
         print("=== POST DATA END ===")
         # возвращаем страницу контактов
         self.do_GET()
+
 
 if __name__ == "__main__":
     print(f"Server running at http://{HOST}:{PORT}")
