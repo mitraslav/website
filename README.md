@@ -12,3 +12,15 @@
 git clone https://github.com/mitraslav/website
 ```
 
+2. Примените миграции:
+```
+python manage.py migrate
+
+```
+3. Запустите сервер разработки:
+```
+python manage.py runserver
+```
+4. Откройте в браузере:
+- Главная: http://127.0.0.1:8000/
+- Контакты: http://127.0.0.1:8000/contacts/
