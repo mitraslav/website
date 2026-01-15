@@ -5,12 +5,12 @@ class Category(models.Model):
     description = models.TextField(blank=True, null=True, verbose_name='Описание')
 
     def __str__(self):
-        return self.category_name
+        return self.name
 
     class Meta:
         verbose_name = 'категория'
         verbose_name_plural = 'категории'
-        ordering = ['category_name']
+        ordering = ['name']
 
 class Product(models.Model):
     name = models.CharField(max_length=100, verbose_name='Название', help_text="Введите название продукта")
@@ -22,10 +22,10 @@ class Product(models.Model):
     updated_at = models.DateTimeField(auto_now=True, verbose_name='Дата изменения')
 
     def __str__(self):
-        return self.product_name
+        return self.name
 
     class Meta:
         verbose_name = 'продукт'
         verbose_name_plural = 'продукты'
-        ordering = ['product_name']
+        ordering = ['name']
 
