@@ -11,9 +11,6 @@ class Command(BaseCommand):
         Category.objects.all().delete()
 
         self.stdout.write('Loading categories fixture...')
-        management.call_command('loaddata', 'categories_fixture.json', verbosity=1)
-
-        self.stdout.write('Loading products fixture...')
-        management.call_command('loaddata', 'products_fixture.json', verbosity=1)
+        management.call_command('loaddata', 'products_proj.json', verbosity=1)
 
         self.stdout.write(self.style.SUCCESS('Test data loaded successfully.'))
