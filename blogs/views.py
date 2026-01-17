@@ -1,10 +1,9 @@
 import os
-from django.shortcuts import get_object_or_404
+from dotenv import load_dotenv
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
-from django.urls import reverse
 from django.core.mail import send_mail
 from .models import BlogPost
-from dotenv import load_dotenv
+
 
 load_dotenv()
 
@@ -15,6 +14,7 @@ class BlogPostListView(ListView):
     paginate_by = 10
 
     def get_queryset(self):
+        # возвращаем только опубликованные
         return BlogPost.objects.filter(is_published=True).order_by('-created_at')
 
 class BlogPostDetailView(DetailView):
@@ -31,9 +31,9 @@ class BlogPostDetailView(DetailView):
         if obj.views == 100:
             send_mail(
                 subject=f'Статья "{obj.title}" достигла 100 просмотров',
-                message = f'Поздравляем! Статья "{obj.title}" набрала 100 просмотров.',
-                from_email=None,
-                recipient_list=[os.getenv('EMAIL')]
+                message=f'Поздравляем! Статья "{obj.title}" набрала 100 просмотров.',
+                from_email=None,  # использует DEFAULT_FROM_EMAIL
+                recipient_list=[ 'your_email@example.com' ],  # замените на свой адрес
             )
         return obj
 
@@ -54,4 +54,4 @@ class BlogPostUpdateView(UpdateView):
 class BlogPostDeleteView(DeleteView):
     model = BlogPost
     template_name = 'blogs/post_confirm_delete.html'
-    success_url = '/' # или reverse_lazy('blogs:post_list')
+    success_url = '/'  # или reverse_lazy('blogs:post_list')
