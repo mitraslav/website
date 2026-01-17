@@ -3,7 +3,8 @@
     <a class="navbar-brand" href="{% url 'products_proj:home' %}">Магазин</a>
     <div>
       <a class="btn btn-outline-primary" href="{% url 'products_proj:home' %}">Главная</a>
-      <a class="btn btn-outline-primary" href="/contacts/">Контакты</a>
+      <a class="btn btn-outline-primary" href="{% url 'products_proj:contacts' %}">Контакты</a>
+      <a class="btn btn-outline-primary" href="{% url 'blogs:post_list' %}">Блог</a>
     </div>
   </div>
 </nav>
