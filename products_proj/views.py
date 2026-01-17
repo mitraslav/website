@@ -18,7 +18,7 @@ class ProductListView(ListView):
     paginate_by = 9
 
     def get_queryset(self):
-        return Product.objects.select_related('category').order_by('-created_at-')
+        return Product.objects.select_related('category').order_by('-created_at')
 
 # def index(request):
 #     """
