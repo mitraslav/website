@@ -1,5 +1,6 @@
-{% load static %}
 {% extends 'base.html' %}
+{% load static %}
+
 {% block title %}Каталог — Магазин{% endblock %}
 
 {% block content %}
@@ -34,8 +35,7 @@
     {% endfor %}
   </div>
 
-
-  {% if page_obj.has_other_pages %}
+  {% if page_obj and page_obj.has_other_pages %}
     <nav aria-label="Page navigation" class="mt-4">
       <ul class="pagination justify-content-center">
         {% if page_obj.has_previous %}
