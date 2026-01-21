@@ -14,7 +14,7 @@ class ProductListView(ListView):
     def get_queryset(self):
         return Product.objects.select_related('category').order_by('-created_at')
 
-class ProductDetailView(DetailView):
+class ProductDetailView(LoginRequiredMixin, DetailView):
     model = Product
     template_name = 'catalog/product_detail.html'
     context_object_name = 'product'
