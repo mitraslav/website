@@ -17,6 +17,10 @@ class CustomUserChangeForm(UserChangeForm):
         fields = ('email', 'username', 'avatar', 'phone', 'country')
 
 
+class RegistrationForm(CustomUserCreationForm):
+    pass
+
+
 class EmailAuthenticationForm(forms.Form):
     email = forms.EmailField(label='Email', widget=forms.EmailInput(attrs={'autofocus': True}))
     password = forms.CharField(label='Пароль', strip=False, widget=forms.PasswordInput)
