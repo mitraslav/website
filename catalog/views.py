@@ -4,6 +4,7 @@ from django.views.generic import ListView, DetailView, CreateView, UpdateView, D
 from products_proj.models import Product
 from .forms import ProductForm
 from django.contrib.auth.mixins import LoginRequiredMixin
+from .mixins import IsOwnerMixin, CanDeleteMixin
 
 class ProductListView(ListView):
     model = Product
@@ -28,7 +29,14 @@ class ProductCreateView(LoginRequiredMixin, CreateView):
     def get_success_url(self):
         return reverse_lazy('catalog:product_detail', kwargs={'pk': self.object.pk})
 
-class ProductUpdateView(LoginRequiredMixin, UpdateView):
+    def form_valid(self, form):
+        # привязываем владельца
+        form.instance.owner = self.request.user
+        # по умолчанию сделать продукт не опубликованным
+        form.instance.is_published = False
+        return super().form_valid(form)
+
+class ProductUpdateView(LoginRequiredMixin, IsOwnerMixin, UpdateView):
     model = Product
     form_class = ProductForm
     template_name = 'catalog/product_form.html'
@@ -36,7 +44,7 @@ class ProductUpdateView(LoginRequiredMixin, UpdateView):
     def get_success_url(self):
         return reverse_lazy('catalog:product_detail', kwargs={'pk': self.object.pk})
 
-class ProductDeleteView(LoginRequiredMixin, DeleteView):
+class ProductDeleteView(LoginRequiredMixin, CanDeleteMixin, DeleteView):
     model = Product
     template_name = 'catalog/product_confirm_delete.html'
     success_url = reverse_lazy('catalog:product_list')
