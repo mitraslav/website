@@ -1,9 +1,10 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
+from django.views import View
 from products_proj.models import Product
 from .forms import ProductForm
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from .mixins import IsOwnerMixin, CanDeleteMixin
 
 class ProductListView(ListView):
@@ -48,6 +49,17 @@ class ProductDeleteView(LoginRequiredMixin, CanDeleteMixin, DeleteView):
     model = Product
     template_name = 'catalog/product_confirm_delete.html'
     success_url = reverse_lazy('catalog:product_list')
+
+class ProductUnpublishView(LoginRequiredMixin, PermissionRequiredMixin, View):
+    permission_required = 'products_proj.can_unpublish_product'
+    raise_exception = True
+
+    def post(self, request, pk, *args, **kwargs):
+        product = get_object_or_404(Product, pk=pk)
+        product.is_published = False
+        product.save(update_fields=['is_published'])
+        return redirect('catalog:product_detail', pk=pk)
+
 
 def home(request):
     """
