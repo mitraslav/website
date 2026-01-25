@@ -2,10 +2,27 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.views import View
-from products_proj.models import Product
+from products_proj.models import Product, Category
 from .forms import ProductForm
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from .mixins import IsOwnerMixin, CanDeleteMixin
+from .services import get_products_by_category
+
+
+class CategoryProductListView(ListView):
+    template_name = 'catalog/category_products.html'
+    context_object_name = 'products'
+    paginate_by = 12
+
+    def get_queryset(self):
+        category_id = self.kwargs.get('category_id')
+        return get_products_by_category(category_id)
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        category_id = self.kwargs.get('category_id')
+        ctx['category'] = get_object_or_404(Category, pk=category_id)
+        return ctx
 
 class ProductListView(ListView):
     model = Product
