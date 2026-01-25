@@ -8,6 +8,14 @@ from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMix
 from .mixins import IsOwnerMixin, CanDeleteMixin
 from .services import get_products_by_category
 
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
+from django.conf import settings
+from django.core.cache import cache
+
+CACHE_TTL_PRODUCT = 60 * 15
+PRODUCT_LIST_CACHE_TIMEOUT = 60 * 5
+
 
 class CategoryProductListView(ListView):
     template_name = 'catalog/category_products.html'
@@ -31,8 +39,18 @@ class ProductListView(ListView):
     paginate_by = 12
 
     def get_queryset(self):
-        return Product.objects.select_related('category').order_by('-created_at')
+        cache_key = 'product_list_all'
+        if settings.CACHE_ENABLED:
+            qs = cache.get(cache_key)
+            if qs is not None:
+                return qs
 
+        qs = list(Product.objects.filter(is_published=True).select_related('category').order_by('-created_at'))
+        if settings.CACHE_ENABLED:
+            cache.set(cache_key, qs, PRODUCT_LIST_CACHE_TIMEOUT)
+        return qs
+
+@method_decorator(cache_page(CACHE_TTL_PRODUCT), name='dispatch')
 class ProductDetailView(LoginRequiredMixin, DetailView):
     model = Product
     template_name = 'catalog/product_detail.html'
