@@ -1,9 +1,36 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
-from products_proj.models import Product
+from django.views import View
+from products_proj.models import Product, Category
 from .forms import ProductForm
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from .mixins import IsOwnerMixin, CanDeleteMixin
+from .services import get_products_by_category
+
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
+from django.conf import settings
+from django.core.cache import cache
+
+CACHE_TTL_PRODUCT = 60 * 15
+PRODUCT_LIST_CACHE_TIMEOUT = 60 * 5
+
+
+class CategoryProductListView(ListView):
+    template_name = 'catalog/category_products.html'
+    context_object_name = 'products'
+    paginate_by = 12
+
+    def get_queryset(self):
+        category_id = self.kwargs.get('category_id')
+        return get_products_by_category(category_id)
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        category_id = self.kwargs.get('category_id')
+        ctx['category'] = get_object_or_404(Category, pk=category_id)
+        return ctx
 
 class ProductListView(ListView):
     model = Product
@@ -12,8 +39,18 @@ class ProductListView(ListView):
     paginate_by = 12
 
     def get_queryset(self):
-        return Product.objects.select_related('category').order_by('-created_at')
+        cache_key = 'product_list_all'
+        if settings.CACHE_ENABLED:
+            qs = cache.get(cache_key)
+            if qs is not None:
+                return qs
 
+        qs = list(Product.objects.filter(is_published=True).select_related('category').order_by('-created_at'))
+        if settings.CACHE_ENABLED:
+            cache.set(cache_key, qs, PRODUCT_LIST_CACHE_TIMEOUT)
+        return qs
+
+@method_decorator(cache_page(CACHE_TTL_PRODUCT), name='dispatch')
 class ProductDetailView(LoginRequiredMixin, DetailView):
     model = Product
     template_name = 'catalog/product_detail.html'
@@ -28,7 +65,14 @@ class ProductCreateView(LoginRequiredMixin, CreateView):
     def get_success_url(self):
         return reverse_lazy('catalog:product_detail', kwargs={'pk': self.object.pk})
 
-class ProductUpdateView(LoginRequiredMixin, UpdateView):
+    def form_valid(self, form):
+        # привязываем владельца
+        form.instance.owner = self.request.user
+        # по умолчанию сделать продукт не опубликованным
+        form.instance.is_published = False
+        return super().form_valid(form)
+
+class ProductUpdateView(LoginRequiredMixin, IsOwnerMixin, UpdateView):
     model = Product
     form_class = ProductForm
     template_name = 'catalog/product_form.html'
@@ -36,10 +80,21 @@ class ProductUpdateView(LoginRequiredMixin, UpdateView):
     def get_success_url(self):
         return reverse_lazy('catalog:product_detail', kwargs={'pk': self.object.pk})
 
-class ProductDeleteView(LoginRequiredMixin, DeleteView):
+class ProductDeleteView(LoginRequiredMixin, CanDeleteMixin, DeleteView):
     model = Product
     template_name = 'catalog/product_confirm_delete.html'
     success_url = reverse_lazy('catalog:product_list')
+
+class ProductUnpublishView(LoginRequiredMixin, PermissionRequiredMixin, View):
+    permission_required = 'products_proj.can_unpublish_product'
+    raise_exception = True
+
+    def post(self, request, pk, *args, **kwargs):
+        product = get_object_or_404(Product, pk=pk)
+        product.is_published = False
+        product.save(update_fields=['is_published'])
+        return redirect('catalog:product_detail', pk=pk)
+
 
 def home(request):
     """
